@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// تنظیمات کلی برنامه (تک ردیفه)
+model Settings {
+  id           String @id @default("main")
+  passwordHash String
+}
+
+// سال تحصیلی
+model Year {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  prizes   PrizeRate[]
+  sections Section[]
+  students Student[]
+  groups   GroupRecord[]
+}
+
+// مبلغ جایزه هر گروه مقطعی برای هر سال (تومان)
+model PrizeRate {
+  id     String @id @default(cuid())
+  yearId String
+  year   Year   @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  group  String // G1_3 | G4_6 | G7_9 | G10_12 | UNI
+  amount Int
+
+  @@unique([yearId, group])
+}
+
+// بخش‌های برنامه (ستاد، کمیسیون، ...) - مستقل برای هر سال
+model Section {
+  id        String   @id @default(cuid())
+  yearId    String
+  year      Year     @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  name      String
+  type      String // INDIVIDUAL | GROUP
+  createdAt DateTime @default(now())
+
+  students Student[]
+  groups   GroupRecord[]
+}
+
+// ثبت تکی دانش‌آموز (بخش‌های تکی مثل ستاد)
+model Student {
+  id          String   @id @default(cuid())
+  yearId      String
+  year        Year     @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  sectionId   String
+  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  fullName    String
+  nameNorm    String // نام نرمال‌شده برای تشخیص تکراری
+  gender      String // FEMALE | MALE
+  grade       Int? // 1..12 و null = دانشجو
+  gpaRaw      String // مقدار خام وارد شده (عدد یا حروف)
+  gpaValue    Float? // مقدار عددی در صورت عددی بودن
+  isException Boolean  @default(false)
+  parentName  String
+  parentRank  String // طبقه
+  parentUnit  String // واحد
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([yearId, sectionId])
+  @@unique([yearId, sectionId, nameNorm])
+}
+
+// رکورد آماری گروهی (استان‌ها با sectionId=null و بخش‌های گروهی)
+model GroupRecord {
+  id        String   @id @default(cuid())
+  yearId    String
+  year      Year     @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  sectionId String?
+  section   Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title     String // نام استان یا عنوان گروه
+  titleNorm String
+  counts    String // JSON: {"G1_3":{"f":0,"m":0},"G4_6":{...},"G7_9":{...},"G10_12":{...},"UNI":{...}}
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([yearId, sectionId])
+}
