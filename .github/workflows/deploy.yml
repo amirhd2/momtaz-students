@@ -40,6 +40,9 @@ jobs:
           NEXT_PUBLIC_DATA_MODE: local
           NEXT_PUBLIC_SUBPATH: /momtaz-students
 
+      - name: Generate offline service worker (precache all build assets)
+        run: node scripts/gen-sw.mjs --out out --version "${{ github.sha }}"
+
       - name: Add .nojekyll (serve _next assets as-is)
         run: touch out/.nojekyll
 

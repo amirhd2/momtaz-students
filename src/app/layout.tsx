@@ -4,6 +4,7 @@ import "@fontsource/vazirmatn/500.css";
 import "@fontsource/vazirmatn/700.css";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegister } from "@/components/sw-register";
 
 export const metadata: Metadata = {
   title: "سامانه ثبت دانش‌آموزان ممتاز همکاران",
@@ -58,6 +59,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-background text-foreground font-vazir min-h-screen flex flex-col">
         {children}
+        <ServiceWorkerRegister />
         <Toaster position="bottom-left" richColors dir="rtl" />
       </body>
     </html>
