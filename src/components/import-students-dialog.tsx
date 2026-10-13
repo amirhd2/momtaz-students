@@ -30,7 +30,7 @@ import {
   Wand2,
   Info,
 } from 'lucide-react';
-import { apiFetch, ApiError } from '@/lib/api-client';
+import { apiFetch, downloadFile, ApiError } from '@/lib/api-client';
 import { toast } from 'sonner';
 import {
   buildImportRows,
@@ -88,12 +88,7 @@ export function ImportStudentsDialog({
   };
 
   const downloadTemplate = () => {
-    const a = document.createElement('a');
-    a.href = '/api/students/template';
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    void downloadFile('/api/students/template');
   };
 
   const parseFile = async (file: File) => {
@@ -101,14 +96,10 @@ export function ImportStudentsDialog({
     try {
       const form = new FormData();
       form.set('file', file);
-      const res = await fetch('/api/students/import-parse', { method: 'POST', body: form });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (res.status === 401 && typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('sa:unauthorized'));
-        }
-        throw new ApiError(data.error ?? 'خطا در خواندن فایل', res.status);
-      }
+      const data = await apiFetch<{ rows: Array<{ fileRow: number; cells: string[] }> }>(
+        '/api/students/import-parse',
+        { method: 'POST', body: form }
+      );
       const parsed = buildImportRows(data.rows ?? [], existingNorms);
       setRows(parsed);
       setStep('preview');

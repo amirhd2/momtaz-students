@@ -8,17 +8,22 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "سامانه ثبت دانش‌آموزان ممتاز همکاران",
   description: "جمع‌آوری و مدیریت اطلاعات دانش‌آموزان ممتاز فرزندان همکاران سازمانی",
-  // مانیفست وب‌اپ (نصب روی اندروید با آیکون اختصاصی)
+  // مانیفست وب‌اپ (نصب روی اندروید با آیکون اختصاصی) — نکست خودش basePath را اعمال می‌کند
   manifest: "/manifest.webmanifest",
   // فاویکون مرورگر + آیکون صفحه اصلی آیفون (apple-touch-icon)
+  // SB: زیرمسیر انتشار استاتیک (مثلاً /momtaz-students روی گیت‌هاب پیجز) — نکست آیکون‌ها را prefix نمی‌کند
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: `${process.env.NEXT_PUBLIC_SUBPATH ?? ""}/favicon.ico`, sizes: "any", type: "image/x-icon" },
+      { url: `${process.env.NEXT_PUBLIC_SUBPATH ?? ""}/favicon-32x32.png`, sizes: "32x32", type: "image/png" },
+      { url: `${process.env.NEXT_PUBLIC_SUBPATH ?? ""}/favicon-16x16.png`, sizes: "16x16", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      {
+        url: `${process.env.NEXT_PUBLIC_SUBPATH ?? ""}/apple-touch-icon.png`,
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
   },
   // وب‌اپ روی آیفون — پس از «Add to Home Screen» تمام‌صفحه اجرا می‌شود

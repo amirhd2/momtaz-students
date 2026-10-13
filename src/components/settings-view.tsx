@@ -676,13 +676,14 @@ function SectionsTab({ activeYear, onRefresh }: { activeYear: YearInfo | null; o
 
 /* ---------- تب پشتیبان‌گیری ---------- */
 interface DataInfoResponse {
-  storageKind: 'persistent' | 'legacy-dev';
+  storageKind: 'persistent' | 'legacy-dev' | 'browser';
   dataDir: string;
   dbPath: string;
   backupsDir: string;
   backups: { name: string; size: number; mtime: number }[];
   migratedFrom: string | null;
   backedUpThisRun: boolean;
+  lastSavedAt?: number | null;
 }
 
 /** کارت «محل نگهداری داده‌ها» — اطمینان از اینکه داده‌ها امانت‌اند و آپدیت برنامه آنها را پاک نمی‌کند */
@@ -731,11 +732,13 @@ function DataLocationCard() {
     }
   };
 
+  const isBrowser = info?.storageKind === 'browser';
+
   return (
     <div className="rounded-md border p-4 space-y-3 bg-emerald-50/40 border-emerald-200">
       <h3 className="font-semibold text-sm flex items-center gap-1.5">
         <HardDrive className="w-4 h-4 text-emerald-700" />
-        محل نگهداری داده‌ها روی این سیستم
+        {isBrowser ? 'محل نگهداری داده‌ها در نسخه مرورگری' : 'محل نگهداری داده‌ها روی این سیستم'}
       </h3>
       {!info ? (
         <p className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -757,15 +760,31 @@ function DataLocationCard() {
             </Button>
           </div>
           <ul className="text-xs text-muted-foreground leading-6 list-disc ps-5 space-y-0.5">
-            <li>
-              داده‌ها <b className="text-foreground">خارج از پوشه برنامه</b> ذخیره می‌شوند؛ نصب یا به‌روزرسانی نسخه جدید
-              برنامه هرگز داده‌های شما را پاک نمی‌کند.
-            </li>
-            <li>
-              در هر اجرای برنامه یک <b className="text-foreground">پشتیبان خودکار</b> در پوشه <span dir="ltr" className="font-mono">backups</span> کنار
-              فایل داده گرفته می‌شود و ۷ نسخه آخر نگهداری می‌شود.
-            </li>
-            <li>برای اطمینان بیشتر، به‌صورت دوره‌ای از دکمه «دانلود فایل پشتیبان» استفاده کنید.</li>
+            {isBrowser ? (
+              <>
+                <li>
+                  داده‌ها در <b className="text-foreground">حافظه مرورگر همین دستگاه</b> (IndexedDB) ذخیره می‌شود؛
+                  نصب یا به‌روزرسانی نسخه جدید برنامه و حتی قطع اینترنت هرگز داده‌های شما را پاک نمی‌کند.
+                </li>
+                <li>
+                  این نسخه <b className="text-foreground">سرور مرکزی ندارد</b> — داده‌های هر دستگاه جدا نگه داشته می‌شود؛
+                  برای انتقال داده به دستگاه دیگر از «دانلود فایل پشتیبان» و «بازیابی» استفاده کنید.
+                </li>
+                <li>برای اطمینان بیشتر، به‌صورت دوره‌ای از دکمه «دانلود فایل پشتیبان» خروجی بگیرید.</li>
+              </>
+            ) : (
+              <>
+                <li>
+                  داده‌ها <b className="text-foreground">خارج از پوشه برنامه</b> ذخیره می‌شوند؛ نصب یا به‌روزرسانی نسخه جدید
+                  برنامه هرگز داده‌های شما را پاک نمی‌کند.
+                </li>
+                <li>
+                  در هر اجرای برنامه یک <b className="text-foreground">پشتیبان خودکار</b> در پوشه <span dir="ltr" className="font-mono">backups</span> کنار
+                  فایل داده گرفته می‌شود و ۷ نسخه آخر نگهداری می‌شود.
+                </li>
+                <li>برای اطمینان بیشتر، به‌صورت دوره‌ای از دکمه «دانلود فایل پشتیبان» استفاده کنید.</li>
+              </>
+            )}
           </ul>
           {info.backups.length > 0 && (
             <div className="pt-1 space-y-1.5">
