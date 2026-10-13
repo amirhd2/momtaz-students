@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LoginScreen } from '@/components/login-screen';
@@ -20,6 +20,11 @@ type View =
 
 export function AppRoot() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  // ردگیری وضعیت واقعی ورود — برای تمایز «اولین بازدید» از «انقضای نشست واقعی»
+  const authedRef = useRef(false);
+  useEffect(() => {
+    authedRef.current = authed === true;
+  }, [authed]);
   const [boot, setBoot] = useState<BootstrapData | null>(null);
   const [view, setView] = useState<View>({ kind: 'section', sectionId: '' });
   const [loadingBoot, setLoadingBoot] = useState(false);
@@ -67,10 +72,12 @@ export function AppRoot() {
   // شنود رویداد انقضای نشست
   useEffect(() => {
     const onUnauthorized = () => {
+      // اگر کاربر اصلاً وارد نشده بود (اولین بازدید)، پیام انقضا بی‌معنی است — فقط فرم ورود
+      const wasAuthed = authedRef.current;
       setAuthed(false);
       setBoot(null);
       clearResourceCache();
-      toast.error('نشست شما منقضی شد؛ دوباره وارد شوید');
+      if (wasAuthed) toast.error('نشست شما منقضی شد؛ دوباره وارد شوید');
     };
     window.addEventListener('sa:unauthorized', onUnauthorized);
     return () => window.removeEventListener('sa:unauthorized', onUnauthorized);
