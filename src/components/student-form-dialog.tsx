@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AutocompleteInput } from '@/components/autocomplete-input';
-import { Check, Loader2, AlertTriangle } from 'lucide-react';
+import { Check, Loader2, AlertTriangle, Venus, Mars } from 'lucide-react';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import {
   validateGpa,
@@ -52,7 +52,8 @@ export function StudentFormDialog({
   onSaved,
 }: StudentFormDialogProps) {
   const [fullName, setFullName] = useState('');
-  const [gender, setGender] = useState<'FEMALE' | 'MALE'>('FEMALE');
+  // جنسیت به‌صورت پیش‌فرض انتخاب نشده — انتخاب آن الزامی است (کنترل در submit)
+  const [gender, setGender] = useState<'FEMALE' | 'MALE' | null>(null);
   const [gradeText, setGradeText] = useState('');
   const [grade, setGrade] = useState<number | null>(null);
   const [gradeError, setGradeError] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export function StudentFormDialog({
   const [parentRank, setParentRank] = useState('');
   const [parentUnit, setParentUnit] = useState('');
   const [duplicate, setDuplicate] = useState<string | null>(null);
+  const [genderError, setGenderError] = useState(false);
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export function StudentFormDialog({
       setParentUnit(editing.parentUnit);
     } else {
       setFullName('');
-      setGender('FEMALE');
+      setGender(null);
       setGrade(null);
       setGradeText('');
       setGpaRaw('');
@@ -96,6 +98,7 @@ export function StudentFormDialog({
     setDuplicate(null);
     setNameError(null);
     setGradeError(null);
+    setGenderError(false);
     setGpaAutoSet(false);
   }, [open, editing]);
 
@@ -181,6 +184,12 @@ export function StudentFormDialog({
       hasError = true;
     }
 
+    // جنسیت الزامی — بدون پیش‌فرض
+    if (gender === null) {
+      setGenderError(true);
+      hasError = true;
+    }
+
     if (gradeText.trim() === '' || gradeInvalid) {
       setGradeError(gradeText.trim() === '' ? 'مقطع تحصیلی را انتخاب کنید' : 'مقطع باید از فهرست انتخاب شود');
       hasError = true;
@@ -196,13 +205,14 @@ export function StudentFormDialog({
 
     if (hasError) return;
 
+    const finalGender = gender as 'FEMALE' | 'MALE';
     setSaving(true);
     try {
       const payload = {
         yearId,
         sectionId,
         fullName: fullName.trim(),
-        gender,
+        gender: finalGender,
         grade,
         gpaRaw,
         isException: gpaExceptionActive || (gpaValidation !== null && !gpaValidation.valid && gpaException),
@@ -246,7 +256,7 @@ export function StudentFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto custom-scroll">
+      <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto custom-scroll soft-placeholder">
         <DialogHeader>
           <DialogTitle>{editing ? 'ویرایش اطلاعات دانش‌آموز' : `ثبت دانش‌آموز جدید — ${sectionName}`}</DialogTitle>
           <DialogDescription>
@@ -286,20 +296,58 @@ export function StudentFormDialog({
                 )}
               </div>
               <RadioGroup
-                value={gender}
-                onValueChange={(v) => setGender(v as 'FEMALE' | 'MALE')}
+                value={gender ?? ''}
+                onValueChange={(v) => {
+                  setGender(v as 'FEMALE' | 'MALE');
+                  setGenderError(false);
+                }}
                 className="flex gap-2 pt-1"
               >
-                <div className="flex items-center gap-1 border rounded-md px-2 h-9 has-[[data-state=checked]]:bg-primary has-[[data-state=checked]]:text-primary-foreground">
-                  <RadioGroupItem value="FEMALE" id="gender-f" className="order-2" />
-                  <Label htmlFor="gender-f" className="cursor-pointer text-sm font-normal">دختر</Label>
+                {/* دختر — صورتی */}
+                <div
+                  className={`flex items-center gap-1.5 border rounded-md px-2.5 h-9 cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-pink-400 focus-within:ring-offset-1 ${
+                    gender === 'FEMALE'
+                      ? 'bg-pink-50 border-pink-500'
+                      : genderError
+                        ? 'border-destructive'
+                        : 'bg-background hover:border-pink-300'
+                  }`}
+                >
+                  <Venus className="w-4 h-4 shrink-0 text-pink-500" />
+                  <RadioGroupItem value="FEMALE" id="gender-f" className="sr-only" />
+                  <Label
+                    htmlFor="gender-f"
+                    className={`cursor-pointer text-sm font-normal ${gender === 'FEMALE' ? 'text-pink-700' : ''}`}
+                  >
+                    دختر
+                  </Label>
                 </div>
-                <div className="flex items-center gap-1 border rounded-md px-2 h-9 has-[[data-state=checked]]:bg-primary has-[[data-state=checked]]:text-primary-foreground">
-                  <RadioGroupItem value="MALE" id="gender-m" className="order-2" />
-                  <Label htmlFor="gender-m" className="cursor-pointer text-sm font-normal">پسر</Label>
+                {/* پسر — آبی */}
+                <div
+                  className={`flex items-center gap-1.5 border rounded-md px-2.5 h-9 cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 ${
+                    gender === 'MALE'
+                      ? 'bg-blue-50 border-blue-500'
+                      : genderError
+                        ? 'border-destructive'
+                        : 'bg-background hover:border-blue-300'
+                  }`}
+                >
+                  <Mars className="w-4 h-4 shrink-0 text-blue-500" />
+                  <RadioGroupItem value="MALE" id="gender-m" className="sr-only" />
+                  <Label
+                    htmlFor="gender-m"
+                    className={`cursor-pointer text-sm font-normal ${gender === 'MALE' ? 'text-blue-700' : ''}`}
+                  >
+                    پسر
+                  </Label>
                 </div>
               </RadioGroup>
             </div>
+            {genderError && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> انتخاب جنسیت الزامی است
+              </p>
+            )}
           </div>
 
           {/* مقطع تحصیلی */}
